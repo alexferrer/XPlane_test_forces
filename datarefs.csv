@@ -1,0 +1,8 @@
+dataref_path,type,scale,low_limit,high_limit,name
+sim/flightmodel/forces/faxil_plug_acf,float,-10,0,100,-Thrust 10x
+sim/flightmodel/forces/fnrml_plug_acf,float,-100,-50,50,-Lift 10x
+sim/flightmodel/position/local_vy,float,0.01,-50,50,vertical speed x/100
+sim/flightmodel/position/local_ay,float,1,-50,50,vertical acceleration 
+sim/flightmodel/position/local_y,float,0.1,0,100,vertical position x/10
+sim/flightmodel/forces/L_plug_acf,float,1,-50,50,Roll
+sim/flightmodel/forces/M_plug_acf,float,10,-50,50,Pitch 10x
