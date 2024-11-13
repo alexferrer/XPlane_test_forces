@@ -6,8 +6,7 @@ from XPPython3 import xp_imgui # type: ignore
 def create_CG_Window(self):
     common.CG_WINDOW_OPEN = True
     title = 'Configure Forces'
-    if common.DEBUG > 1:
-        print("Creating CG Window")
+    if common.DEBUG > 1: print("Creating CG Window")
     
     l, t, r, b = xp.getScreenBoundsGlobal()
     width = 600

@@ -111,9 +111,8 @@ class PythonInterface:
                 dataref = entry[6]
                 curr_value = xp.getDataf(dataref)
                 if entry[8]: #if checked on box
-                     print(f"label: {label}, Current Value: {curr_value}, Amount: {amount}, Scale: {scale}")
+                     if common.DEBUG > 3 : print(f"label: {label}, Current Value: {curr_value}, Amount: {amount}, Scale: {scale}")
                      xp.setDataf(dataref, curr_value + (amount * scale * common.calibrate_factor_ms  ))  
-                     #print(entry[5] ,"->" ,new_value)
 
                 entry[7] = xp.getDataf(dataref)
         return common.CALLBACKTIME/1000
