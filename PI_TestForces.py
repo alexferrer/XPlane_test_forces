@@ -64,11 +64,11 @@ class PythonInterface:
         # [dataref string  | type | scale | Low | High | description | dref pointer| Dref value | checkbox | change amount]
         if common.DEBUG > 1: print("Loading datarefs")
         for entry in common.data_array:
+            if common.DEBUG > 1: print("> ",entry) 
             entry.append(xp.findDataRef(entry[0]))  # [6]  dataref pointer
             entry.append(xp.getDataf(entry[6]))     # [7]  current Dref value
             entry.append(False)                     # [8]  checkbox on/off
             entry.append(0)                         # [9]  amount to change dataref by
-            if common.DEBUG > 1: print("> ",entry) 
         #----------------------------------------------
 
         self.create_CG_Window()

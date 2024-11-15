@@ -4,7 +4,7 @@
 '''
 #-------------------------------------
 # debug mode  0 = off , 1= stats, 2 = some, 3 = more, 4 = all 
-DEBUG = 0
+DEBUG = 1
 PLUGIN_ENABLED = True 
 CALLBACKTIME = 1
 
@@ -12,7 +12,7 @@ CALLBACKTIME = 1
 sim_time=0
 data_array = []
 
-CALIBRATE_MODE = False  # set calibration mode on/off to generate fake thermal to adjust lift factor
+CALIBRATE_MODE = True  # set calibration mode on/off to generate fake thermal to adjust lift factor
 
 calibrate_factor_ms = 1
 

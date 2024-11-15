@@ -6,3 +6,5 @@ sim/flightmodel/position/local_ay,float,1,-50,50,vertical acceleration
 sim/flightmodel/position/local_y,float,0.1,0,100,vertical position x/10
 sim/flightmodel/forces/L_plug_acf,float,1,-50,50,Roll
 sim/flightmodel/forces/M_plug_acf,float,10,-50,50,Pitch 10x
+sim/cockpit2/gauges/indicators/total_energy_fpm,float,1,-10,10,Tot Energy fpm
+sim/flightmodel/position/indicated_airspeed,    float,1,0  ,200,Airspeed
