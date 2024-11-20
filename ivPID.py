@@ -74,6 +74,7 @@ class PID:
 
         """
         error = self.SetPoint - feedback_value
+        #print("P,I,D ", self.PTerm, self.ITerm, self.DTerm)
 
         self.current_time = current_time if current_time is not None else time.time()
         delta_time = self.current_time - self.last_time

@@ -17,14 +17,11 @@ activatePlugin = 2
 
 class PythonInterface:      
 
-    pid_speed = PID(1.2, 1, 0.001)
-    pid_roll = PID(1.2, 1, 0.001)
-    pid_roll.SetPoint=0.0
+    pid_roll  = PID(2, 1  , 0.001)
+    pid_pitch = PID(2, 1, 0.01)
+    pid_speed = PID(.1, .01, 0.01)
 
     def __init__(self):
-        for _ in range(5):
-            print()
-        print("---------------------------------------------------------------- " )
 
         self.CGMenuItem = 0
         self.StatsWindowItem = 0
@@ -37,21 +34,37 @@ class PythonInterface:
         self.PLUGIN_ENABLED = True
         self.ABOUT_WINDOW_OPEN = True
         self.ABOUT_WINDOW = None
-        self.CRUISE_SPEED = 100
         self.WING_LEVEL = 0      #wings level angle 
-        self.current_airspeed = 0
+        self.current_pitch = 0
         self.current_roll = 0
-        self.s_scale = 1 # scale of correction
-        self.r_scale = 1 # scale of correction
         self.new_roll = 0
         self.new_pitch = 0
-        self.auto_roll = True
+
+        self.auto_pitch = True
+        self.pitch_scale = 200
+        self.pid_pitch.SetPoint = 1
+        self.TARGET_PITCH_ANGLE = 1
+
         self.auto_speed = True
+        self.speed_scale = 1
+        self.pid_speed.SetPoint = 100
+        self.current_speed = 0
+        self.new_target_pitch = 0
+        self.TARGET_SPEED = 100
+        self.speed_count = 0
+
+        self.auto_roll = True
+        self.roll_scale = 850
+        self.pid_roll.SetPoint=0.0
+
+
+
+
 
     def XPluginStart(self):
         self.Name = "Auto Speed"
         self.Sig = "AlexFerrer.Python.AutoSpeed"
-        self.Desc = "A plugin that keeps glider flight speed constant"
+        self.Desc = "Aautopilot plugin that keeps glider flight speed constant"
 
         # Define an XPlane command 
         # It may be called from a menu item, a key stroke, or a joystick button
@@ -63,8 +76,6 @@ class PythonInterface:
             xp.findPluginsMenu(), "Auto Speed", 0, 1)
         self.MyMenuHandlerCB = self.MyMenuHandlerCallback
         self.myMenu = xp.createMenu("Auto Speed", xp.findPluginsMenu(), mySubMenuItem, self.MyMenuHandlerCB, 0)
-        #xp.appendMenuItem(self.myMenu, "Configure Forces", configForces, 1)
-        #xp.appendMenuItem(self.myMenu, "Activate Stats Window", statsWindow, 1)
         xp.appendMenuItem(self.myMenu, "About", aboutWindow, 1)
         xp.appendMenuItem(self.myMenu, "Activate Plugin", activatePlugin, 1)    
         # -------------------------------------------------
@@ -111,19 +122,32 @@ class PythonInterface:
             return 1
         self.sim_time = runtime
 
-        
         if self.auto_speed:
-            current_pitch = xp.getDataf(self.PlanePitch)
-            self.current_airspeed = xp.getDataf(self.airspeed) * 1.852
-            self.pid_speed.update(self.current_airspeed)
-            self.new_pitch = self.pid_speed.output  *5
-            xp.setDataf(self.pitch_Dref, self.new_pitch)
-            #if self.DEBUG > 3 : print("newpitch = ",int(new_pitch) )
+            if self.speed_count > 100:
+                #print("adjust speed")
+                self.speed_count = 0    
+                self.current_speed = xp.getDataf(self.airspeed) * 1.852
+                self.pid_speed.update(self.current_speed)
+                self.new_target_pitch = self.pid_speed.output * self.speed_scale
+
+                self.pid_pitch.clear()
+                self.TARGET_PITCH_ANGLE = self.new_target_pitch * -1
+                self.pid_pitch.SetPoint = self.TARGET_PITCH_ANGLE
+
+            self.speed_count += 1
+    
+
+
+        if self.auto_pitch:
+            self.current_pitch = xp.getDataf(self.PlanePitch) 
+            self.pid_pitch.update(self.current_pitch)
+            self.new_pitch = self.pid_pitch.output  * self.pitch_scale * 1
+            xp.setDataf(self.pitch_Dref, self.new_pitch )
 
         if self.auto_roll:
             self.current_roll = xp.getDataf(self.PlaneRol)
             self.pid_roll.update(self.current_roll)
-            self.new_roll = self.pid_roll.output*100
+            self.new_roll = self.pid_roll.output * self.roll_scale
             xp.setDataf(self.roll_Dref, self.new_roll)
 
        
@@ -152,9 +176,9 @@ class PythonInterface:
         title = 'About Xplane Forces'
         l, t, r, b = xp.getScreenBoundsGlobal()
         width = 400
-        height = 450
+        height = 550
         left_offset = 110
-        top_offset = 810
+        top_offset = 410
 
         self.ABOUT_WINDOW = xp_imgui.Window(
             left=l + left_offset,
@@ -177,24 +201,60 @@ class PythonInterface:
         imgui.text("")
 
         imgui.text("Cruise Speed")
-        changed, self.CRUISE_SPEED = imgui.slider_int("##Cruise Speed", self.CRUISE_SPEED, 70, 250)
+        changed, self.TARGET_SPEED = imgui.slider_int("##Cruise Speed", self.TARGET_SPEED, 0, 300)
         if changed:
-            self.pid_speed.SetPoint=self.CRUISE_SPEED
-        imgui.text("Current Speed: " + str(round(self.current_airspeed,3)) + " kph")
+            self.pid_speed.clear()
+            self.pid_speed.SetPoint=self.TARGET_SPEED
+
+        imgui.text("Target speed: " + str(self.pid_speed.SetPoint) )
+        imgui.text("Current speed: " + str(round(self.current_speed,3)) + " kph")
+        imgui.text("Current Error: " + str(round(self.pid_speed.SetPoint-self.current_speed,3)) + " kph")
+        imgui.text("New Pitch setpoint: " + str(round(self.new_target_pitch,3)) )
+        imgui.text("")
+
+
+
+        imgui.text("Current setpoint: " + str(self.pid_pitch.SetPoint) )
+        imgui.text("Current pitch: " + str(round(self.current_pitch,3)) )
+        imgui.text("Current Error: " + str(round(self.pid_pitch.SetPoint-self.current_pitch,3)))
         imgui.text("New Pitch: " + str(round(self.new_pitch,3)) + " deg")
         imgui.text("")
 
 
-        imgui.text("Wing Level")
-        imgui.text("Current Roll: " + str(round(self.current_roll,3)) + " degrees")
-        imgui.text("New Roll: " + str(round(self.new_roll,3)) + " degrees")
-        imgui.separator()
-        imgui.text("")
+
+        #imgui.text("Wing Level")
+        #imgui.text("Current Roll: " + str(round(self.current_roll,3)) + " degrees")
+        #imgui.text("New Roll: " + str(round(self.new_roll,3)) + " degrees")
+        #imgui.separator()
+        #imgui.text("")
+
+
         imgui.separator()
         imgui.text("Disable all forces at once")
         changed, self.PLUGIN_ENABLED = imgui.checkbox("Test Mode on/off",self.PLUGIN_ENABLED)
+
         changed, self.auto_speed = imgui.checkbox("Auto Speed",self.auto_speed)
+        if changed:
+           self.pid_speed.clear()
+           if self.auto_speed:
+              self.pid_speed.SetPoint=self.TARGET_SPEED
+
+        changed, self.auto_pitch = imgui.checkbox("Auto Pitch",self.auto_pitch)
+        if changed:
+           self.pid_pitch.clear()
+           if self.auto_pitch:
+              self.pid_pitch.SetPoint=self.TARGET_PITCH_ANGLE
+
+
         changed, self.auto_roll = imgui.checkbox("Auto Roll",self.auto_roll)
+        if changed:
+           self.pid_roll.clear()
+           if self.auto_roll:
+              self.pid_roll.SetPoint=0.0
+
+
+
+
 
         imgui.separator()
         imgui.text("")
@@ -208,6 +268,15 @@ class PythonInterface:
         imgui.text("Max")
         if changed:
             print("Debug Setting", self.DEBUG)
+
+        imgui.separator()
+        imgui.text("Pitch Scale")
+        changed, self.pitch_scale = imgui.slider_int("##Pitchcale", self.pitch_scale, 1, 1000)
+
+        imgui.separator()
+        imgui.text("Roll Scale")
+        changed, self.roll_scale = imgui.slider_int("##RollScale", self.roll_scale, 100, 1000)
+
         imgui.separator()
         imgui.text("Callback Time")
         changed, self.CALLBACKTIME = imgui.slider_int("##CallbackTime", self.CALLBACKTIME, 1, 1000)
